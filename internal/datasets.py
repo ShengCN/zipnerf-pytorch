@@ -471,6 +471,7 @@ class Blender(Dataset):
         if config.render_path:
             raise ValueError('render_path cannot be used for the blender dataset.')
         pose_file = os.path.join(self.data_dir, f'transforms_{self.split.value}.json')
+
         with utils.open_file(pose_file, 'r') as fp:
             meta = json.load(fp)
         images = []
@@ -543,8 +544,8 @@ class LLFF(Dataset):
             pose_data = NeRFSceneManager(colmap_dir).process()
         else:
             # # Attempt to load Blender/NGP format if COLMAP data not present.
-            # pose_data = load_blender_posedata(self.data_dir)
-            raise ValueError('COLMAP data not found.')
+            pose_data = load_blender_posedata(self.data_dir)
+            # raise ValueError('COLMAP data not found.')
         image_names, poses, pixtocam, distortion_params, camtype = pose_data
 
         # Previous NeRF results were generated with images sorted by filename,
