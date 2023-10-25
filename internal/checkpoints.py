@@ -4,7 +4,7 @@ import shutil
 import accelerate
 import torch
 import glob
-
+import json
 
 def restore_checkpoint(
         checkpoint_dir,
@@ -12,6 +12,14 @@ def restore_checkpoint(
         logger=None
 ):
     dirs = glob.glob(os.path.join(checkpoint_dir, "*"))
+    odirs = []
+
+    for d in dirs:
+        if 'best' in d:
+            continue
+        odirs.append(d)
+
+    dirs = odirs
     dirs.sort()
     path = dirs[-1] if len(dirs) > 0 else None
     if path is None:
@@ -36,3 +44,19 @@ def save_checkpoint(save_dir,
         for folder in folders[: len(folders) + 1 - total_limit]:
             shutil.rmtree(folder)
     accelerator.save_state(os.path.join(save_dir, f"{step:06d}"))
+
+
+def save_best_checkpoint(save_dir, accelerator: accelerate.Accelerator, 
+                         best_psnr, best_ssim, best_step):
+    accelerator.save_state(os.path.join(save_dir, f"best"))
+    json_file = os.path.join(save_dir, 'best.json')
+
+    with open(json_file, 'w') as f:
+        data = {
+            'psnr': best_psnr,
+            'ssim': best_ssim,
+            'step': best_step
+        }
+
+        json.dump(data, f, indent=4)
+        

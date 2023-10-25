@@ -4,6 +4,7 @@ Config.near = 0.2
 Config.far = 1e6
 Config.factor = 4
 Config.batch_size = 4096 
+Config.max_steps = 50000
 
 Model.raydist_fn = 'power_transformation'
 Model.opaque_background = True

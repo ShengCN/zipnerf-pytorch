@@ -31,7 +31,6 @@ configs.define_common_flags()
 TIME_PRECISION = 1000  # Internally represent integer times in milliseconds.
 
 
-
 def main(unused_argv):
     config = configs.load_config()
     config.exp_path = os.path.join("exp", config.exp_name)
@@ -130,6 +129,12 @@ def main(unused_argv):
     total_time = 0
     total_steps = 0
     reset_stats = True
+
+    # early stop 
+    best_psnr = 0
+    best_ssim = 0
+    best_step = 0
+
     if config.early_exit_steps is not None:
         num_steps = config.early_exit_steps
     else:
@@ -338,6 +343,22 @@ def main(unused_argv):
                         postprocess_fn(rendering['rgb']), postprocess_fn(test_batch['rgb']))
                     logger.info(f'Eval {step}: {eval_time:0.3f}s, {rays_per_sec:0.0f} rays/sec')
                     logger.info(f'Metrics computed in {(time.time() - metric_start_time):0.3f}s')
+
+                    cur_psnr = metric['psnr']
+                    cur_ssim = metric['ssim']
+
+                    if best_psnr < metric['psnr']:
+                        best_step = step
+                        best_psnr = metric['psnr']
+                        best_ssim = metric['ssim']
+
+                        print(f'{best_step}: find the best model. {best_psnr}/{best_ssim} ')
+                        checkpoints.save_best_checkpoint(config.checkpoint_dir,
+                                                         accelerator, 
+                                                         best_psnr, 
+                                                         best_ssim, 
+                                                         best_step)
+
                     for name, val in metric.items():
                         if not np.isnan(val):
                             logger.info(f'{name} = {val:.4f}')
